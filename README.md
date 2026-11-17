@@ -10,6 +10,13 @@ Accepted to WACV 2026
 
 [[`Arxiv`](https://www.arxiv.org/abs/2512.05446)] [[`Project Page`](https://nycu-mapl.github.io/TED-4DGS_page/)] 
 
+## News
+
+- This codebase additionally supports the illumination compensation setting of
+  **IC-4DGS: Illumination-Compensated 4D Gaussian Splatting Under Photometric Variations** (ICIP 2026)
+  [[`Paper`](https://ieeexplore.ieee.org/document/11630311)].
+  See [Illumination compensation (IC-4DGS)](#illumination-compensation-ic-4dgs) for usage.
+
 
 ## Abstract
 <p align="left">
@@ -108,6 +115,24 @@ Rate points used in each sweep:
 | N3DV      | 0.002, 0.004, 0.008, 0.016         | `lmbda * 0.8`  |
 | HyperNeRF | 0.001, 0.002, 0.004, 0.008, 0.016  | `lmbda`        |
 
+### Illumination compensation (IC-4DGS)
+
+The IC-4DGS setting ([paper](https://ieeexplore.ieee.org/document/11630311)) adds a lightweight
+per-view illumination compensation module (`scene/ic_modules.py`) that is applied to the rendered image of
+each training camera before the loss, so that photometric variations across cameras are absorbed by the
+module instead of the Gaussians. A small L1 penalty on the predicted residual keeps the compensation
+close to identity.
+
+It is disabled by default. To enable it, add `--use_ic_module` to `COMMON` in the corresponding
+`run_<scene>.py`, e.g.
+
+```python
+COMMON = (f"--eval --lod 0 --voxel_size 0.0333 --update_init_factor 128 --cam_mask 1 --use_ic_module "
+          f"-s {DATA} --project_name release_{SCENE} --no_comet")
+```
+
+The IC module is currently supported on N3DV only; it is ignored (with a warning) for HyperNeRF scenes.
+
 ## Outputs
 
 * Checkpoints and renderings: `LOG_ROOT/<scene>/base` and `LOG_ROOT/<scene>/l<lmbda>` (default `LOG_ROOT = ./output/release`).
@@ -137,6 +162,20 @@ If you find our work helpful, please consider citing:
       primaryClass={cs.CV},
       url={https://arxiv.org/abs/2512.05446}, 
 }
+```
+
+If you use the illumination compensation setting, please also cite IC-4DGS:
+
+```bibtex
+@INPROCEEDINGS{11630311,
+  author={Yang, He-Bi and He, Ming-Zhe and Yang, Cheng-Wei and Chiang, Jui-Chiu and Liu, Yu-Lun and Peng, Wen-Hsiao},
+  booktitle={2026 IEEE International Conference on Image Processing (ICIP)}, 
+  title={IC-4DGS: Illumination-Compensated 4D Gaussian Splatting Under Photometric Variations}, 
+  year={2026},
+  volume={},
+  number={},
+  pages={1-6},
+  doi={10.1109/ICIP61757.2026.11630311}}
 ```
 
 ## LICENSE
