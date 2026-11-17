@@ -1,0 +1,35 @@
+name: ted4dgs
+channels:
+  - pytorch
+  - pyg
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.7.13
+  - pip=22.3.1
+  - cudatoolkit=11.6
+  - mkl=2024.0            # newer mkl breaks `import torch` (iJIT_NotifyEvent) with pytorch 1.12
+  - pytorch=1.12.1
+  - torchvision=0.13.1
+  - pytorch-scatter=2.1.0
+  - numpy=1.21.6
+  - plyfile=0.8.1
+  - tqdm=4.67.1
+  - ninja=1.12.1          # needed by torchac to JIT-build its backend
+  - pip:
+    - einops==0.6.1
+    - torchac==0.9.3
+    - constriction==0.3.5
+    - mmengine==0.10.7
+    - comet-ml==3.52.1
+    - wandb==0.16.4
+    - opencv-python==4.11.0.86
+    - kornia==0.7.1
+    - open3d==0.17.0
+    - scikit-learn==1.0.2
+    - scipy==1.7.3
+    - matplotlib==3.5.3
+    - natsort==8.4.0
+    - submodules/diff-gaussian-rasterization
+    - submodules/simple-knn
+    - submodules/gridencoder

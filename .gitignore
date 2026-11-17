@@ -1,0 +1,7 @@
+*.bak-*
+*.pyc
+*.pyo
+.git
+__pycache__/
+core.22573remap/
+output/

@@ -1,6 +1,6 @@
 # WACV 2026 : TED-4DGS: Temporally Activated and Embedding-based Deformation for 4DGS Compression
 
-Accpeted to WACV 2026
+Accepted to WACV 2026
 
 [Cheng-Yuan Ho](https://www.linkedin.com/in/kelvincyho?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app), 
 [He-Bi Yang](https://www.linkedin.com/in/hebiyang?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app ), 
@@ -29,16 +29,95 @@ significantly reducing file sizes while maintaining superior rendering quality c
 class="center">
 </p>
 
+## Installation
 
-## 🔧 Code Availability
-We are currently preparing and cleaning up the implementation.  
-The code and instructions will be released here soon. Please stay tuned! ⭐
+Tested on Linux with Python 3.7, PyTorch 1.12.1 and CUDA 11.6.
+Building the CUDA extensions requires `nvcc` (CUDA 11.6) on your `PATH`.
 
+```bash
+git clone https://github.com/NYCU-MAPL/TED-4DGS.git
+cd TED-4DGS
+conda env create -f environment.yml   # run from the repo root; also builds the three CUDA submodules
+conda activate ted4dgs
+```
 
+`environment.yml` installs the CUDA extensions in `submodules/`
+(`diff-gaussian-rasterization`, `simple-knn`, `gridencoder`).
+To rebuild them manually:
 
+```bash
+pip install submodules/diff-gaussian-rasterization
+pip install submodules/simple-knn
+pip install submodules/gridencoder
+```
 
-## 📢 Citation
-If you find our work helpful, please cite:
+## Data
+
+We evaluate on [N3DV (DyNeRF)](https://github.com/facebookresearch/Neural_3D_Video) and
+[HyperNeRF (vrig)](https://github.com/google/hypernerf/releases/tag/v0.1).
+Place the datasets under `./data` (or edit `DATA_ROOT` at the top of each `run_<scene>.py`):
+
+```
+data/
+├── N3DV/
+│   └── <scene>/                  # cook_spinach, cut_roasted_beef, flame_salmon_1, flame_steak, sear_steak
+│       ├── cam00.mp4 ... camXX.mp4
+│       ├── poses_bounds.npy
+│       └── points3D_downsample2.ply
+└── hypernerf/
+    └── <scene>/                  # 3dprinter, banana, broom2, chicken
+        ├── camera/
+        ├── rgb/
+        ├── dataset.json
+        ├── metadata.json
+        └── points3D_downsample2.ply
+```
+
+The loader is selected automatically: a folder with `poses_bounds.npy` is read as N3DV,
+and a folder with `dataset.json` is read as HyperNeRF (each HyperNeRF scene also has its own
+config in `arguments/<scene>.py`, passed by the run script).
+On the first N3DV run, frames are extracted from the videos into `camXX/` folders.
+
+### Initial point cloud
+
+Training is initialized from `points3D_downsample2.ply` in each scene folder (about 40k points per scene);
+there is no random initialization fallback.
+We generate it following the data preparation of [4DGaussians](https://github.com/hustvl/4DGaussians):
+run COLMAP on the scene to obtain a dense point cloud, then downsample it into `points3D_downsample2.ply`.
+
+## Training and Compression
+
+Each scene has its own script that runs the full two-stage pipeline:
+
+1. **Stage 1** trains the base model for 60k iterations (skipped if `chkpnt60000.pth` already exists).
+2. **Stage 2** loads the base checkpoint and runs a rate sweep, ending with real entropy encoding/decoding.
+
+```bash
+python run_flame_steak.py     # N3DV
+python run_banana.py          # HyperNeRF
+```
+
+Available scripts: `run_cook_spinach.py`, `run_cut_roasted_beef.py`, `run_flame_salmon_1.py`,
+`run_flame_steak.py`, `run_sear_steak.py` (N3DV) and `run_3dprinter.py`, `run_banana.py`,
+`run_broom2.py`, `run_chicken.py` (HyperNeRF).
+
+Rate points used in each sweep:
+
+| Dataset   | Rate points (`lmbda`)              | `lmbda_mask`   |
+|-----------|------------------------------------|----------------|
+| N3DV      | 0.002, 0.004, 0.008, 0.016         | `lmbda * 0.8`  |
+| HyperNeRF | 0.001, 0.002, 0.004, 0.008, 0.016  | `lmbda`        |
+
+## Outputs
+
+* Checkpoints and renderings: `LOG_ROOT/<scene>/base` and `LOG_ROOT/<scene>/l<lmbda>` (default `LOG_ROOT = ./output/release`).
+* Metric summaries (`<name>.txt`, `<name>_comp.txt`): `output/release_<scene>/`.
+  `<name>_comp.txt` reports the results after actual encoding/decoding (real bitstream size).
+
+## Logging (optional)
+
+Comet logging is disabled by the run scripts (`--no_comet`).
+To enable it, fill in your `api_key` / `workspace` in `train.py` and drop `--no_comet`.
 
 ## Contact
 
@@ -68,4 +147,5 @@ Please follow the LICENSE of [3D-GS](https://github.com/graphdeco-inria/gaussian
 
  - We thank all authors from [3D-GS](https://github.com/graphdeco-inria/gaussian-splatting) for presenting such an excellent work.
  - We thank all authors from [Scaffold-GS](https://github.com/city-super/Scaffold-GS) for presenting such an excellent work.
-  - We thank all authors from [HAC](https://github.com/YihangChen-ee/HAC) for presenting such an excellent work.
+ - We thank all authors from [HAC](https://github.com/YihangChen-ee/HAC) for presenting such an excellent work.
+ - We thank all authors from [4DGaussians](https://github.com/hustvl/4DGaussians) for presenting such an excellent work.
