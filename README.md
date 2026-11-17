@@ -144,9 +144,6 @@ The IC module is currently supported on N3DV only; it is ignored (with a warning
 Comet logging is disabled by the run scripts (`--no_comet`).
 To enable it, fill in your `api_key` / `workspace` in `train.py` and drop `--no_comet`.
 
-## Contact
-
-- Cheng-Yuan Ho: kelvinhe0218.cs12@nycu.edu.tw
 
 ## Citation
 
